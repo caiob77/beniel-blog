@@ -50,7 +50,7 @@ export default async function Home() {
           className="absolute inset-0"
         >
           <Image
-            src="/images/about/caio-home.jpg"
+            src="/images/about/caio-home.webp"
             alt=""
             fill
             priority
