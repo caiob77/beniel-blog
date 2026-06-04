@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { cache } from "react";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 
@@ -85,7 +86,7 @@ async function listPostFiles(): Promise<{ file: string; slug: string }[]> {
   }
 }
 
-export async function getAllPosts(): Promise<PostMeta[]> {
+export const getAllPosts = cache(async (): Promise<PostMeta[]> => {
   const files = await listPostFiles();
   const posts = await Promise.all(
     files.map(async ({ file, slug }) => {
@@ -107,21 +108,23 @@ export async function getAllPosts(): Promise<PostMeta[]> {
   return posts
     .filter((p) => !p.draft)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
-}
+});
 
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const file = path.join(POSTS_DIR, `${slug}.mdx`);
-  try {
-    return await readPostFile(file, slug);
-  } catch {
-    const mdFile = path.join(POSTS_DIR, `${slug}.md`);
+export const getPostBySlug = cache(
+  async (slug: string): Promise<Post | null> => {
+    const file = path.join(POSTS_DIR, `${slug}.mdx`);
     try {
-      return await readPostFile(mdFile, slug);
+      return await readPostFile(file, slug);
     } catch {
-      return null;
+      const mdFile = path.join(POSTS_DIR, `${slug}.md`);
+      try {
+        return await readPostFile(mdFile, slug);
+      } catch {
+        return null;
+      }
     }
-  }
-}
+  },
+);
 
 export function extractHeadings(content: string): Heading[] {
   const lines = content.split("\n");
